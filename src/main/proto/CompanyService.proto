@@ -1,0 +1,86 @@
+syntax = "proto3";
+import "google/protobuf/wrappers.proto";
+
+option java_multiple_files = true;
+option java_package = "org.icgc.argo.company_service";
+option java_outer_classname = "CompanyServiceProto";
+option objc_class_prefix = "CCSP";
+
+package company_service;
+
+//--------------------------------------------------
+//     Language definitions
+//--------------------------------------------------
+enum ProtoLanguage{
+    UNDEFINED = 0;
+    ENGLISH = 1;
+    FRENCH= 2;
+    SPANISH = 3;
+}
+
+message ProtoLanguageValue{
+    ProtoLanguage value = 1;
+}
+
+//--------------------------------------------------
+//     Employee definitions
+//--------------------------------------------------
+message ProtoEmployeeRegular {
+    int32 id = 1;
+    string firstName = 2;
+    string lastName = 3;
+    bool isMale = 4;
+}
+
+message ProtoEmployeeOO{
+    oneof optionalId {
+        int32 id = 1;
+    }
+    oneof optionalFirstName {
+        string firstName = 2;
+    }
+    oneof optionalLastName{
+        string lastName = 3;
+    }
+    oneof optionalIsMale{
+        bool isMale = 4;
+    }
+}
+
+message ProtoEmployeeComposite{
+    google.protobuf.Int32Value id = 1;
+    google.protobuf.StringValue firstName = 2;
+    google.protobuf.StringValue lastName = 3;
+    google.protobuf.BoolValue isMale = 4;
+}
+
+//--------------------------------------------------
+//     Company definitions
+//--------------------------------------------------
+message ProtoCompanyRegular {
+    int32 id = 1;
+    string name = 2;
+    ProtoLanguage language = 3;
+    repeated ProtoEmployeeRegular employees = 4;
+}
+
+message ProtoCompanyOO{
+    oneof optionalId {
+        int32 id = 1;
+    }
+    oneof optionalName{
+        string name = 2;
+    }
+    oneof optionalLanguage{
+        ProtoLanguage language = 3;
+    }
+    repeated ProtoEmployeeOO employees = 4;
+}
+
+message ProtoCompanyComposite {
+    google.protobuf.Int32Value id = 1;
+    google.protobuf.StringValue name = 2;
+    ProtoLanguageValue language = 3;
+    repeated ProtoEmployeeComposite employees = 4;
+}
+
