@@ -2,7 +2,7 @@ syntax = "proto3";
 import "google/protobuf/wrappers.proto";
 
 option java_multiple_files = true;
-option java_package = "org.icgc.argo.company_service";
+option java_package = "com.roberttisma.sandbox.protobuf_mapstruct.company_service";
 option java_outer_classname = "CompanyServiceProto";
 option objc_class_prefix = "CCSP";
 
