@@ -14,4 +14,5 @@ public class EmployeeDao {
   private String firstName;
   private String lastName;
   private boolean male;
+  private Boolean isCool;
 }

@@ -1,27 +1,26 @@
 package com.roberttisma.sandbox.protobuf_mapstruct;
 
+import com.google.protobuf.BoolValue;
+import com.google.protobuf.Int32Value;
+import com.google.protobuf.StringValue;
+import com.roberttisma.sandbox.protobuf_mapstruct.company_service.ProtoCompanyOO;
+import com.roberttisma.sandbox.protobuf_mapstruct.company_service.ProtoEmployeeComposite;
+import com.roberttisma.sandbox.protobuf_mapstruct.company_service.ProtoEmployeeOO;
+import com.roberttisma.sandbox.protobuf_mapstruct.converters.CompositeConverter;
+import com.roberttisma.sandbox.protobuf_mapstruct.converters.ConverterConfig;
+import com.roberttisma.sandbox.protobuf_mapstruct.converters.LanguageConverterImpl;
+import com.roberttisma.sandbox.protobuf_mapstruct.converters.OOConverter;
+import com.roberttisma.sandbox.protobuf_mapstruct.converters.OOConverterImpl;
+import com.roberttisma.sandbox.protobuf_mapstruct.model.entity.EmployeeDao;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
-import org.icgc.argo.company_service.ProtoCompanyOO;
-import org.icgc.argo.company_service.ProtoEmployeeOO;
-import org.icgc.argo.program_service.Program;
-import com.roberttisma.sandbox.protobuf_mapstruct.converters.ConverterConfig;
-import org.icgc.argo.program_service.converters.LanguageConverterImpl;
-import com.roberttisma.sandbox.protobuf_mapstruct.converters.OOConverter;
-import org.icgc.argo.program_service.converters.OOConverterImpl;
-import com.roberttisma.sandbox.protobuf_mapstruct.model.entity.EmployeeDao;
-import org.icgc.argo.rob_service.RobBespokeMessage;
-import org.icgc.argo.rob_service.RobEnum;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.util.UUID;
-
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 @Slf4j
 @RunWith(SpringRunner.class)
@@ -29,35 +28,12 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 public class MapstuctPOCTest {
 
   @Autowired
-  private OOConverter mapper;
+  private OOConverter ooMapper;
 
-  @Test
-  public void fromProto_enum_default_defined(){
-    val proto = Program.newBuilder().setId(UUID.randomUUID().toString()).build();
-    val dd = Conv.COV.convertToDaoProgram(proto).getMembershipType();
+  @Autowired
+  private CompositeConverter compositeMapper;
 
-    assertThatExceptionOfType(IllegalArgumentException.class)
-        .isThrownBy(() -> Conv.COV.convertToDaoProgram(proto))
-        .withMessageContaining("Can't get the number of an unknown enum value");
 
-  }
-
-  /**
-   * Empty RobBespokeMessage
-   */
-  @Test
-  public void testRob(){
-    val empty = RobBespokeMessage.newBuilder().build();
-    assertThat(empty.getId()).isEqualTo(0);
-    assertThat(empty.getName()).isEqualTo("");
-    assertThat(empty.getRobEnum()).isEqualTo(RobEnum.UNDEFINED);
-    assertThat(RobEnum.UNDEFINED.getNumber()).isEqualTo(0);
-
-    // convert To dao
-
-    log.info("sdfsdf");
-
-  }
 
   @Test
   public void OneOfProtoEmployee_to_JavaEmployee_issues(){
@@ -76,7 +52,7 @@ public class MapstuctPOCTest {
     /**
      * After conversion to a java DAO, there is no way of knowing is the field was actually set by the proto DTO :(
      */
-    val shouldBeEmptyDao = mapper.convertToEmployeeDao(emptyDto);
+    val shouldBeEmptyDao = ooMapper.convertToEmployeeDao(emptyDto);
     assertThat(shouldBeEmptyDao.getId()).isEqualTo(0);
     assertThat(shouldBeEmptyDao.isMale()).isEqualTo(false);
     assertThat(shouldBeEmptyDao.getFirstName()).isEqualTo("");
@@ -93,7 +69,7 @@ public class MapstuctPOCTest {
      * Once the above proto DTO with fields defined with default values is converted to a java DAO,
      * there is no way of knowing if the fields were actually set to the default values or if they are not set at all
      */
-    val setDao = mapper.convertToEmployeeDao(setDto);
+    val setDao = ooMapper.convertToEmployeeDao(setDto);
     assertThat(setDao.getId()).isEqualTo(0);
     assertThat(setDao.isMale()).isEqualTo(false);
     assertThat(setDao.getFirstName()).isEqualTo("");
@@ -101,7 +77,7 @@ public class MapstuctPOCTest {
 
 
   @Test
-  public void JavaEmployee_to_OneOfProtoEmployee_issues(){
+  public void EmployeeDao_to_OneOfProtoEmployee_issues(){
 
     /**
      * As expected, the presence for primative field, id, can be detected when the corresponding setter is not called
@@ -121,7 +97,7 @@ public class MapstuctPOCTest {
      while the others are falsely defined.
      */
     val emptyDato = EmployeeDao.builder().build();
-    val shouldBeEmptyDto = mapper.convertToProtoEmployee(emptyDato);
+    val shouldBeEmptyDto = ooMapper.convertToProtoEmployee(emptyDato);
     assertThat(isIdDefined(shouldBeEmptyDto)).isTrue();
     assertThat(isMaleDefined(shouldBeEmptyDto)).isTrue();
     assertThat(isFirstNameDefined(shouldBeEmptyDto)).isFalse();
@@ -134,7 +110,7 @@ public class MapstuctPOCTest {
      * will falsely show as defined.
      */
     val setDAO = EmployeeDao.builder().id(234).build();
-    val expectedEmptyDto = mapper.convertToProtoEmployee(setDAO);
+    val expectedEmptyDto = ooMapper.convertToProtoEmployee(setDAO);
     assertThat(isIdDefined(expectedEmptyDto)).isTrue();
     assertThat(isMaleDefined(expectedEmptyDto)).isTrue();
     assertThat(isFirstNameDefined(expectedEmptyDto)).isFalse();
@@ -145,7 +121,7 @@ public class MapstuctPOCTest {
    * except now theres a list. I probably should have started with company instead of employee
    */
   @Test
-  public void OneOfProtoCompany_to_CompanyPojo_issues(){
+  public void OneOfProtoCompany_to_CompanyDao_issues(){
     /**
      * For lists, it is easy to see if they contain anything (presence check)
      */
@@ -155,13 +131,85 @@ public class MapstuctPOCTest {
     /**
      * Fortunately, using the OneOf method you list presence is properly converted
      */
-    val shouldByEmptyCompanyPojo = mapper.convertToCompanyDao(emptyProto);
+    val shouldByEmptyCompanyPojo = ooMapper.convertToCompanyDao(emptyProto);
     assertThat(shouldByEmptyCompanyPojo.getEmployees()).isEmpty();
 
     val setProto = ProtoCompanyOO.newBuilder().addEmployees(ProtoEmployeeOO.newBuilder().build()).build();
     assertThat(setProto.getEmployeesList()).hasSize(1);
-    val setPojo = mapper.convertToCompanyDao(setProto);
+    val setPojo = ooMapper.convertToCompanyDao(setProto);
     assertThat(setPojo.getEmployees()).hasSize(1);
+  }
+
+  @Test
+  public void EmployeeDao_to_CompositeProtoEmployee_issues(){
+    /**
+     * Using the composite mapper, the presence checking is correct, and so null fields are NOT set.
+     * Since the DAO contains primatives such as int and boolean, the corresponding setter on the proto will be called
+     */
+    val emptyDato = EmployeeDao.builder().build();
+    val shouldBeEmptyDto = compositeMapper.convertToProtoEmployee(emptyDato);
+    assertThat(shouldBeEmptyDto.hasId()).isTrue();
+    assertThat(shouldBeEmptyDto.hasIsMale()).isTrue();
+    assertThat(shouldBeEmptyDto.hasFirstName()).isFalse();
+
+    /**
+     * By defining the firstname in the DAO, the corresponding setter in the proto is called, making it present
+     */
+    val setDAO = EmployeeDao.builder().firstName("John").build();
+    val expectedEmptyDto = compositeMapper.convertToProtoEmployee(setDAO);
+    assertThat(expectedEmptyDto.hasId()).isTrue();
+    assertThat(expectedEmptyDto.hasIsMale()).isTrue();
+    assertThat(expectedEmptyDto.hasFirstName()).isTrue();
+  }
+
+  @Test
+  public void CompositeProtoEmployee_to_EmployeeDAO_issues(){
+    /**
+     * Since all the fields are objects, the proto object has `has` presence checking generated for each field.
+     * As expected, a composite employee with no fields set should have all their `has` methods returning false,
+     * however their value will not neccessarily be null
+     */
+    val emptyDto = ProtoEmployeeComposite.newBuilder().build();
+    assertThat(emptyDto.hasId()).isFalse();
+    assertThat(emptyDto.hasIsMale()).isFalse();
+    assertThat(emptyDto.hasIsCool()).isFalse();
+    assertThat(emptyDto.hasFirstName()).isFalse();
+
+    /**
+     * The one downside to the composite approach, is needing to call the `getValue()` method in addition to calling the getter method.
+     */
+    assertThat(emptyDto.getId().getValue()).isEqualTo(0);
+    assertThat(emptyDto.getIsMale().getValue()).isFalse();
+    assertThat(emptyDto.getFirstName().getValue()).isEqualTo("");
+    assertThat(emptyDto.getIsCool().getValue()).isFalse();
+
+    /**
+     * Since the emptyDTO did not call any setters, the compositeMapper will construct a DAO with null values for Object references, and default values for primatives (like int and boolean)
+     */
+    val emptyDao = compositeMapper.convertToEmployeeDao(emptyDto);
+    assertThat(emptyDao.getId()).isEqualTo(0);
+    assertThat(emptyDao.isMale()).isFalse();
+    assertThat(emptyDao.getIsCool()).isNull();
+    assertThat(emptyDao.getFirstName()).isNull();
+
+    /**
+     * Create a DTO with values defined, that coinincidetly are default values.
+     */
+    val setDto = ProtoEmployeeComposite.newBuilder()
+        .setIsMale(BoolValue.of(false))
+        .setIsCool(BoolValue.of(false))
+        .setId(Int32Value.of(0))
+        .setFirstName(StringValue.of(""))
+        .build();
+
+    /**
+     * Although default value were explicitly set in the previous step, the compositeMapper is able to detect object references that were explictly set, which is why they are not null. This is the main benefit with using the composite approach.
+     */
+    val setDao = compositeMapper.convertToEmployeeDao(setDto);
+    assertThat(setDao.getId()).isEqualTo(0); // Same as emptyDao
+    assertThat(setDao.isMale()).isFalse(); // Same as emptyDao
+    assertThat(setDao.getFirstName()).isEqualTo(""); // NOT NULL - presence detected, and non-default value
+    assertThat(setDao.getIsCool()).isFalse(); // NOT NULL - presence detected, and non-default value
   }
 
 

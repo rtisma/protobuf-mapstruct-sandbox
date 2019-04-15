@@ -30,6 +30,7 @@ message ProtoEmployeeRegular {
     string firstName = 2;
     string lastName = 3;
     bool isMale = 4;
+    bool isCool = 5;
 }
 
 message ProtoEmployeeOO{
@@ -45,6 +46,9 @@ message ProtoEmployeeOO{
     oneof optionalIsMale{
         bool isMale = 4;
     }
+    oneof optionalIsCool{
+        bool isCool = 5;
+    }
 }
 
 message ProtoEmployeeComposite{
@@ -52,6 +56,7 @@ message ProtoEmployeeComposite{
     google.protobuf.StringValue firstName = 2;
     google.protobuf.StringValue lastName = 3;
     google.protobuf.BoolValue isMale = 4;
+    google.protobuf.BoolValue isCool = 5;
 }
 
 //--------------------------------------------------

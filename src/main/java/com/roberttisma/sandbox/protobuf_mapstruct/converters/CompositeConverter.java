@@ -32,6 +32,7 @@ public interface CompositeConverter {
 	@Mapping(target = "mergeFirstName", ignore = true)
 	@Mapping(target = "mergeLastName", ignore = true)
 	@Mapping(target = "mergeIsMale", ignore = true)
+  @Mapping(target = "mergeIsCool", ignore = true)
   @InheritInverseConfiguration //This will take the Mapping of isMale from the inverse converter
   ProtoEmployeeComposite convertToProtoEmployee(EmployeeDao employeeDao);
 
